@@ -33,6 +33,9 @@
 | TRAP-17 | 旧版列名映射 | legacy.csv | `app/modules/contract/schema.py` | `tests/test_contract.py::test_legacy_aliased` |
 | TRAP-18 | 空文件、空白文件与仅表头 | 测试构造 | `app/modules/intake/service.py` | `tests/test_intake.py::test_empty_states` |
 | TRAP-26 | 陈旧复核版本拒绝 | 测试构造 | `app/modules/review/decisions.py` | `tests/test_review.py::test_stale` |
+| TRAP-31 | 舍入区间跨允差线不得按显示值签认 | rounded.csv | `app/modules/reconcile/tolerance.py` | `tests/test_tolerance.py::test_verdict_inside_hold_over` |
+| TRAP-32 | 舍入账缺步长/允差列或数值非法 | 测试构造 | `app/modules/reconcile/ledger.py` | `tests/test_tolerance.py::test_rounded_book_header_requires_step_and_tolerance` |
+| TRAP-33 | 精测晚到后原舍入结论仍可查、同输入重跑不新增批次 | rounded.csv | `app/modules/runs/service.py` | `tests/test_rounded_ledger.py::test_late_precision_book_reopens_signoff_and_keeps_old_conclusion` |
 | TRAP-112 | asymmetric | cases.csv | `app/modules/domain/rule.py` | `tests/test_domain.py::test_asymmetric` |
 | TRAP-113 | no common head | cases.csv | `app/modules/domain/rule.py` | `tests/test_domain.py::test_no_common_head` |
 

@@ -9,6 +9,8 @@ REASONS = {
     'AMOUNT_DELTA': '复算与外部账计量不同', 'BOOK_CONFLICT': '独立账含重复业务键',
     'RUN_UNKNOWN': '没有此批次', 'DEMO_UNKNOWN': '没有此样例', 'STALE': '复核版本已过期',
     'REVIEW_NOTE': '有差异时须填写复核意见', 'REVIEW_DECISION': '复核结论无效',
+    'REVIEW_ROUNDED': '舍入记录跨允差，暂缓签认', 'TOL_FORMAT': '舍入步长或允差无效',
+    'TOL_OK': '舍入区间在允差内可签认', 'TOL_HOLD': '舍入区间跨允差线待精测', 'TOL_OVER': '确定超差不得签认',
 }
 
 REASONS.update({'PUMP_FORMAT': '测点格式无效', 'PUMP_POINT': '同流量测点重复', 'PUMP_LIMIT': '测点数或泵数超限', 'PUMP_MONOTONE': '曲线单调性错误', 'PUMP_SPAN': '实测区间无交集', 'PUMP_CROSS': '实测区间无交点', 'PUMP_DUP': '泵编号无效', 'DATE': '日期格式无效', 'REV_BLOCKED': '较新来源尚未采信'})

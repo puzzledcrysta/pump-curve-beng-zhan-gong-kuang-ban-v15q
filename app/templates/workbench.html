@@ -25,6 +25,7 @@
 <div class="kpi"><small>隔离</small><strong data-count="rejected">—</strong><span>条</span></div>
 <div class="kpi"><small>来源记录</small><strong data-count="input">—</strong><span>条</span></div>
 <div class="kpi"><small>账差</small><strong data-count="mismatched">—</strong><span>条</span></div>
+<div class="kpi"><small>待精测</small><strong data-count="hold">—</strong><span>条</span></div>
 <div class="kpi"><small>净差</small><strong data-count="delta">—</strong><span>立方米/时</span></div>
         </section>
         <div class="grid">
@@ -36,7 +37,7 @@
     <section class="panel results" aria-labelledby="phase">
       <div class="panel__head"><h2 id="phase">并联工况</h2><span class="num" id="run-id"></span></div>
       <div id="tools" class="filters" hidden><label>筛选 <input id="filter" type="search" placeholder="工况单 / 原因" maxlength="80"></label>
-        <label id="only-differences" hidden><input id="differences" type="checkbox"> 只看差异</label><output id="shown"></output></div>
+        <label id="only-differences" hidden><input id="differences" type="checkbox"> 只看差异</label><output id="shown"></output><output id="signoff" role="status"></output></div>
       <div class="scroll" id="grid-data"><p class="empty">运行本班样例</p></div>
       <form id="review" class="panel__body" hidden>
         <label>复核意见 <textarea id="review-note" maxlength="500" rows="2"></textarea></label>
@@ -49,7 +50,8 @@
       <div class="panel__head"><h2 id="input-title">实测曲线</h2><small>CSV</small></div>
       <form id="source" class="panel__body">
         <div class="actions"><button type="submit" class="btn btn--primary">运行并联工况</button>
-        <button type="button" id="sample" class="btn">载入样例</button></div>
+        <button type="button" id="sample" class="btn">载入样例</button>
+        <button type="button" id="rounded-sample" class="btn">载入舍入账样例</button></div>
         <details><summary>导入来源与外部账</summary>
           <label>来源文件 <input id="source-file" type="file" accept=".csv,text/csv"></label>
           <textarea id="source-csv" aria-label="原始记录 CSV" rows="4"></textarea>

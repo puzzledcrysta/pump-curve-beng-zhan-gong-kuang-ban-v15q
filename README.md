@@ -29,3 +29,5 @@ docker compose exec -T app pytest -q
 ```
 
 `sample_data/shift.csv` 是班次数据，`sample_data/external.csv` 是独立账样例。`cases.csv` 固定业务反例，`legacy.csv` 和 `truncated.csv` 用于验证历史格式与断行。
+
+`sample_data/rounded.csv` 是只给四舍五入显示值、舍入步长和允差的外部账样例（四列表头）。「工况对读」按差值区间判定：区间整体在允差内可签认（`TOL_OK`），跨过允差线则列「待精测」（`TOL_HOLD`）并拦截值班复核的「确认」，整体超差为 `TOL_OVER`。精测记录晚到后用精确账重跑即可签认，原舍入批次与依据仍保留在「泵站批次」中；同一份精测重跑不产生新批次，精确外账始终按原逐笔差值办法核对。

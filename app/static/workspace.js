@@ -23,7 +23,7 @@ function filterTable() {
   const {columns, rows, stage} = activeView;
   const query = filter.value.trim().toLocaleLowerCase();
   const selected = rows.filter(row => {
-    if (stage === 'reconcile' && differences.checked && row.code === 'MATCH') return false;
+    if (stage === 'reconcile' && differences.checked && (row.code === 'MATCH' || row.code === 'TOL_OK')) return false;
     return !query || [row.key,row.id,row.line,row.code,settings.reasons[row.code],row.detail,row.note,row.kind]
       .some(value => String(value ?? '').toLocaleLowerCase().includes(query));
   });
@@ -40,7 +40,7 @@ function notice(message, error = false) {
 }
 
 function tag(code) {
-  return el('span', settings.reasons[code] || code, code === 'MATCH' ? 'state' : 'state problem');
+  return el('span', settings.reasons[code] || code, code === 'MATCH' || code === 'TOL_OK' ? 'state' : 'state problem');
 }
 
 
@@ -96,7 +96,8 @@ function setRun(report) {
   byId('run-id').title = id;
   topExport.hidden = false;
   topExport.href = `/api/export/${id}`;
-  const values = {...result.counts, delta: result.book.delta, mismatched: result.book.mismatched};
+  const values = {...result.counts, delta: result.book.delta, mismatched: result.book.mismatched,
+                  hold: result.book.rounding.hold};
   for (const cell of document.querySelectorAll('[data-count]')) cell.textContent = values[cell.dataset.count];
   live.textContent = `批次 ${id.slice(0, 9)} · ${result.balanced ? '记录已对齐' : '记录数不符'}`;
 }
@@ -124,8 +125,24 @@ async function render() {
       view = [key, line, ['判定', row => tag(row.code)], ['说明', 'detail'], ['字段', raw]];
       rows = [...result.quarantine, ...result.suppressed].sort((a,b) => a.line-b.line);
     } else if (stage === 'reconcile') {
-      view = [key, ['实际', 'amount', 'num'], ['外部账', 'reference', 'num'], ['差值', 'delta', 'num'], ['外部行', 'book_line', 'num'], ['结论', row => tag(row.code)]];
-      rows = [...result.book.rows].sort((a,b) => Number(a.code === 'MATCH') - Number(b.code === 'MATCH'));
+      const band = row => row.kind === '舍入'
+        ? el('span', `[${row.delta_min}, ${row.delta_max}] · 步长 ${row.step} · 允差 ${row.tolerance}`, 'num')
+        : el('span', '—');
+      view = [key, ['类型', 'kind'], ['实际', 'amount', 'num'], ['外部账', 'reference', 'num'],
+              ['差值', 'delta', 'num'], ['舍入区间 / 允差', band], ['外部行', 'book_line', 'num'], ['结论', row => tag(row.code)]];
+      const isSettled = row => row.code === 'MATCH' || row.code === 'TOL_OK';
+      rows = [...result.book.rows].sort((a,b) => Number(isSettled(a)) - Number(isSettled(b)));
+      const signoff = byId('signoff');
+      const rounding = result.book.rounding;
+      if (rounding.enabled) {
+        signoff.textContent = rounding.signable
+          ? `舍入记录 ${rounding.ok} 条，区间均在允差内，可签认`
+          : `可签认 ${rounding.ok} 条 · 跨允差待精测 ${rounding.hold} 条 · 确定超差 ${rounding.over} 条，本批不能签认`;
+        signoff.classList.toggle('problem', !rounding.signable);
+      } else {
+        signoff.textContent = '';
+        signoff.classList.remove('problem');
+      }
     } else if (stage === 'intake') {
       const intake = await query('/api/intake', inputs);
       view = [line, ['分类', 'kind'], ['字段', raw]];
@@ -188,21 +205,30 @@ window.addEventListener('hashchange', () => {
   selected = Object.hasOwn(settings.tabs, location.hash.slice(1)) ? location.hash.slice(1) : 'domain';
   render();
 });
+async function loadSamples(bookName) {
+  const paths = ['shift', bookName];
+  const responses = await Promise.all(paths.map(name => fetch(`/api/samples/${name}`)));
+  if (responses.some(item => !item.ok)) throw Error('样例暂时不可用');
+  const files = await Promise.all(responses.map(item => item.arrayBuffer()));
+  for (const [index,name] of ['source','book'].entries()) {
+    const decoded = new TextDecoder('utf-8').decode(files[index]);
+    byId(`${name}-csv`).value = decoded;
+    uploaded.set(name,{text:byId(`${name}-csv`).value,bytes:files[index]});
+  }
+  byId('source-file').value = '';
+  byId('book-file').value = '';
+  document.querySelector('#source details').open = true;
+}
 byId('sample').addEventListener('click', async () => {
-  const paths = ['shift', 'external'];
   try {
-    const responses = await Promise.all(paths.map(name => fetch(`/api/samples/${name}`)));
-    if (responses.some(item => !item.ok)) throw Error('样例暂时不可用');
-    const files = await Promise.all(responses.map(item => item.arrayBuffer()));
-    for (const [index,name] of ['source','book'].entries()) {
-      const decoded = new TextDecoder('utf-8').decode(files[index]);
-      byId(`${name}-csv`).value = decoded;
-      uploaded.set(name,{text:byId(`${name}-csv`).value,bytes:files[index]});
-    }
-    byId('source-file').value = '';
-    byId('book-file').value = '';
-    document.querySelector('#source details').open = true;
+    await loadSamples('external');
     notice('样例已载入');
+  } catch (error) { notice(error.message, true); }
+});
+byId('rounded-sample').addEventListener('click', async () => {
+  try {
+    await loadSamples('rounded');
+    notice('舍入账样例已载入：含跨允差待精测与确定超差记录');
   } catch (error) { notice(error.message, true); }
 });
 for (const name of ['source','book']) {
